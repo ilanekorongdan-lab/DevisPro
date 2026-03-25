@@ -899,7 +899,7 @@ function importAI() {
   const t = document.getElementById('ia-travaux').value.trim();
   const num = '#' + String(dctr).padStart(4, '0');
   devis.push({ id: dctr, num, client: 'Client à définir', type: m.charAt(0).toUpperCase() + m.slice(1), amount: aiTotal, desc: t, date: TODAY, status: 'brouillon' });
-  dctr++; toast('Devis ' + num + ' créé par Werther\'s !'); renderDash();
+  dctr++; toast("Devis " + num + " créé par Werther's !"); renderDash();
 }
 
 
@@ -1076,7 +1076,7 @@ function exportPDF() {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(90, 86, 80);
-  doc.text('Généré avec DevisPro · Propulsé par Werther's', W / 2, 290, { align: 'center' });
+  doc.text("Généré avec DevisPro · Propulsé par Werther's", W / 2, 290, { align: 'center' });
 
   doc.save('Devis-' + d.num.replace('#', '') + '-' + d.client.replace(/\s/g, '-') + '.pdf');
   toast('PDF téléchargé !');
