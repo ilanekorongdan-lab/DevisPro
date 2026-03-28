@@ -535,6 +535,7 @@ textarea.fi{resize:none;height:76px;line-height:1.5}
 <div class="sfab" onclick="contactSupport()">Support</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 
@@ -1118,19 +1119,22 @@ function submitSupportForm(){
   if(!subject){ toast('Indiquez un sujet', true); return; }
   if(!email){ toast('Indiquez votre email', true); return; }
   if(!message){ toast('Ecrivez votre message', true); return; }
-  // Envoyer via mailto proprement formate
-  var fullBody = 'De: ' + email + '\n\nSujet: ' + subject + '\n\nMessage:\n' + message + '\n\n---\nEnvoye depuis DevisPro';
-  var mailtoLink = 'mailto:support.devispro@gmail.com?subject=' + encodeURIComponent('DevisPro - ' + subject) + '&body=' + encodeURIComponent(fullBody);
-  // Ouvrir dans un iframe invisible pour eviter la redirection
-  var link = document.createElement('a');
-  link.href = mailtoLink;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  // Afficher le succes dans le modal
-  document.getElementById('support-form-view').style.display='none';
-  document.getElementById('support-success-view').style.display='block';
+  var btn = document.querySelector('#support-form-view .btn.bp');
+  if(btn){ btn.textContent='Envoi en cours...'; btn.disabled=true; }
+  emailjs.init('xUcP9qd7dFmLH-UcX');
+  emailjs.send('service_uxqhb3n', 'template_etp01eg', {
+    name: email,
+    email: email,
+    title: subject,
+    message: 'De: ' + email + '\nSujet: ' + subject + '\n\n' + message
+  }).then(function(){
+    document.getElementById('support-form-view').style.display='none';
+    document.getElementById('support-success-view').style.display='block';
+  }).catch(function(err){
+    console.error('EmailJS error:', err);
+    if(btn){ btn.textContent='Envoyer le message'; btn.disabled=false; }
+    toast('Erreur envoi, reessayez', true);
+  });
 }
 
 function formatCard(el){var v=el.value.replace(/\\D/g,'').slice(0,16);el.value=v.replace(/(.{4})/g,'$1 ').trim();}
