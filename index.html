@@ -654,6 +654,64 @@ textarea.fi{resize:none;height:76px;line-height:1.5}
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 
+// ── BOUCLIER ANTI-INJECTION ─────────────────────────────────
+(function(){
+  // 1. Detecter les scripts injectes par des extensions
+  var observer = new MutationObserver(function(mutations){
+    mutations.forEach(function(m){
+      m.addedNodes.forEach(function(node){
+        if(node.tagName === 'SCRIPT'){
+          var src = node.src || '';
+          var allowed = [
+            'cdn.jsdelivr.net',
+            'cdnjs.cloudflare.com',
+            'js.stripe.com',
+            'emailjs.com',
+            'joqqjibasgouxqmovmhn.supabase.co',
+            'fonts.googleapis.com'
+          ];
+          var isAllowed = allowed.some(function(d){ return src.indexOf(d) !== -1; });
+          if(src && !isAllowed){
+            console.warn('[DevisPro Shield] Script bloque:', src);
+            try{ node.parentNode.removeChild(node); }catch(e){}
+          }
+        }
+      });
+    });
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  // 2. Verifier l'integrite au chargement
+  window.addEventListener('DOMContentLoaded', function(){
+    var injected = document.querySelectorAll('script[src*="cdn-cgi"], script[src*="email-decode"], script[src*="mcafee"], script[src*="webadvisor"]');
+    if(injected.length > 0){
+      injected.forEach(function(s){ try{ s.parentNode.removeChild(s); }catch(e){} });
+      console.warn('[DevisPro Shield] Scripts injectes supprimes:', injected.length);
+    }
+
+    // 3. Detecter si une extension a modifie le DOM de facon suspecte
+    var suspicious = document.querySelectorAll('[data-cfemail], .__cf_email__, [id*="mcafee"], [class*="webadvisor"]');
+    suspicious.forEach(function(el){ try{ el.parentNode.removeChild(el); }catch(e){} });
+  });
+
+  // 4. Proteger les fonctions critiques contre l'ecrasement
+  window.addEventListener('load', function(){
+    var criticalFns = ['goTo','openModal','closeModal','saveDevis','exportPDF','doAuth'];
+    var missing = criticalFns.filter(function(fn){ return typeof window[fn] !== 'function'; });
+    if(missing.length > 0){
+      // Afficher message d'alerte a l'utilisateur
+      var banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#e05c5c;color:#fff;padding:12px 20px;font-family:sans-serif;font-size:14px;text-align:center;display:flex;align-items:center;justify-content:center;gap:12px';
+      banner.innerHTML = '<span>&#9888;</span> <span>Une extension de votre navigateur perturbe DevisPro. <strong>Essayez en navigation privee</strong> ou desactivez vos extensions (ex: McAfee, AdBlock).</span>' +
+        '<button onclick="this.parentNode.remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 12px;border-radius:4px;cursor:pointer;margin-left:8px">Fermer</button>';
+      document.body.appendChild(banner);
+      console.error('[DevisPro Shield] Fonctions manquantes:', missing);
+    } else {
+      console.log('[DevisPro Shield] Integrite OK - toutes les fonctions presentes');
+    }
+  });
+})();
+
 var SUPA_URL='https://joqqjibasgouxqmovmhn.supabase.co';
 var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvcXFqaWJhc2dvdXhxbW92bWhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMDUzOTUsImV4cCI6MjA4OTg4MTM5NX0.qwGqV0J18xPZoFiyvhHxDY-Rd-9ZWGXvejxRZsZ0fic';
 var sb=null;
