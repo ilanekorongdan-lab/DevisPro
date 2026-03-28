@@ -440,15 +440,48 @@ textarea.fi{resize:none;height:76px;line-height:1.5}
 </div>
 
 <div class="moverlay" id="modal-support">
-  <div class="mbox" style="max-width:420px">
+  <div class="mbox" style="max-width:460px">
     <div class="mtit">Contact support <span class="mclose" onclick="closeModal('support')">&times;</span></div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <button class="btn bg2" style="justify-content:flex-start;padding:14px 16px" onclick="sendSupportEmail('Demande de resiliation')"><div style="text-align:left"><div style="font-weight:500">Resilier mon abonnement</div><div style="font-size:.76rem;color:var(--muted)">Traitement sous 24h</div></div></button>
-      <button class="btn bg2" style="justify-content:flex-start;padding:14px 16px" onclick="sendSupportEmail('Probleme technique')"><div style="text-align:left"><div style="font-weight:500">Signaler un probleme</div><div style="font-size:.76rem;color:var(--muted)">Bug ou erreur</div></div></button>
-      <button class="btn bg2" style="justify-content:flex-start;padding:14px 16px" onclick="sendSupportEmail('Question facturation')"><div style="text-align:left"><div style="font-weight:500">Question facturation</div><div style="font-size:.76rem;color:var(--muted)">Paiement ou abonnement</div></div></button>
-      <button class="btn bg2" style="justify-content:flex-start;padding:14px 16px" onclick="sendSupportEmail('Autre demande')"><div style="text-align:left"><div style="font-weight:500">Autre demande</div></div></button>
+    <div id="support-form-view">
+      <div style="font-size:.84rem;color:var(--muted);margin-bottom:16px">Choisissez le sujet de votre demande</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <button class="btn bg2" style="justify-content:flex-start;padding:12px 14px;border-radius:8px" onclick="selectSupportSubject('Resilier mon abonnement')">
+          <div style="text-align:left"><div style="font-weight:500;font-size:.84rem">Resilier</div><div style="font-size:.72rem;color:var(--muted)">Annuler mon abonnement</div></div>
+        </button>
+        <button class="btn bg2" style="justify-content:flex-start;padding:12px 14px;border-radius:8px" onclick="selectSupportSubject('Probleme technique')">
+          <div style="text-align:left"><div style="font-weight:500;font-size:.84rem">Probleme</div><div style="font-size:.72rem;color:var(--muted)">Bug ou erreur</div></div>
+        </button>
+        <button class="btn bg2" style="justify-content:flex-start;padding:12px 14px;border-radius:8px" onclick="selectSupportSubject('Question facturation')">
+          <div style="text-align:left"><div style="font-weight:500;font-size:.84rem">Facturation</div><div style="font-size:.72rem;color:var(--muted)">Paiement abonnement</div></div>
+        </button>
+        <button class="btn bg2" style="justify-content:flex-start;padding:12px 14px;border-radius:8px" onclick="selectSupportSubject('Autre demande')">
+          <div style="text-align:left"><div style="font-weight:500;font-size:.84rem">Autre</div><div style="font-size:.72rem;color:var(--muted)">Toute autre question</div></div>
+        </button>
+      </div>
+      <div style="background:var(--surf2);border-radius:8px;padding:14px;margin-top:4px">
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:10px;font-weight:500;text-transform:uppercase;letter-spacing:.5px">Ou ecrivez directement</div>
+        <div class="fgr" style="margin-bottom:10px">
+          <label class="fl">Sujet</label>
+          <input class="fi" id="support-subject" placeholder="Decrivez brievement votre demande" style="margin-bottom:0">
+        </div>
+        <div class="fgr" style="margin-bottom:10px">
+          <label class="fl">Votre email</label>
+          <input class="fi" id="support-email" type="email" placeholder="votre@email.com" style="margin-bottom:0">
+        </div>
+        <div class="fgr" style="margin-bottom:12px">
+          <label class="fl">Message</label>
+          <textarea class="fi" id="support-message" style="height:90px;resize:none;margin-bottom:0" placeholder="Expliquez votre probleme en detail..."></textarea>
+        </div>
+        <button class="btn bp" style="width:100%;justify-content:center" onclick="submitSupportForm()">Envoyer le message</button>
+      </div>
+      <div style="text-align:center;font-size:.74rem;color:var(--dim);margin-top:12px">Reponse garantie sous 24h</div>
     </div>
-    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bord);font-size:.78rem;color:var(--dim);text-align:center">Reponse garantie sous 24h</div>
+    <div id="support-success-view" style="display:none;text-align:center;padding:30px 0">
+      <div style="font-size:2.5rem;margin-bottom:12px">&#10003;</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--green);margin-bottom:8px">Message envoye !</div>
+      <div style="font-size:.85rem;color:var(--muted);margin-bottom:20px">Nous vous repondrons sous 24h a l'adresse indiquee.</div>
+      <button class="btn bp" onclick="closeModal('support')">Fermer</button>
+    </div>
   </div>
 </div>
 
@@ -1059,13 +1092,45 @@ function sendEmail(){
   toast('Client de messagerie ouvert!');
 }
 
-function contactSupport(){openModal('support');}
-function sendSupportEmail(reason){
-  var email=currentUser?currentUser.email:'';
-  var sub=encodeURIComponent('DevisPro - '+reason);
-  var body=encodeURIComponent('Bonjour,\n\nDemande: '+reason+'\nEmail: '+email+'\n\nMessage:\n\n');
-  window.open('mailto:support.devispro@gmail.com?subject='+sub+'&body='+body);
-  closeModal('support');toast('Messagerie ouverte!');
+function contactSupport(){
+  // Reset le formulaire
+  var sub = document.getElementById('support-subject');
+  var msg = document.getElementById('support-message');
+  var em = document.getElementById('support-email');
+  if(sub) sub.value='';
+  if(msg) msg.value='';
+  if(em) em.value = currentUser ? currentUser.email : '';
+  document.getElementById('support-form-view').style.display='block';
+  document.getElementById('support-success-view').style.display='none';
+  openModal('support');
+}
+
+function selectSupportSubject(subject){
+  var sub = document.getElementById('support-subject');
+  if(sub){ sub.value = subject; sub.focus(); }
+  document.getElementById('support-message').focus();
+}
+
+function submitSupportForm(){
+  var subject = document.getElementById('support-subject').value.trim();
+  var email = document.getElementById('support-email').value.trim();
+  var message = document.getElementById('support-message').value.trim();
+  if(!subject){ toast('Indiquez un sujet', true); return; }
+  if(!email){ toast('Indiquez votre email', true); return; }
+  if(!message){ toast('Ecrivez votre message', true); return; }
+  // Envoyer via mailto proprement formate
+  var fullBody = 'De: ' + email + '\n\nSujet: ' + subject + '\n\nMessage:\n' + message + '\n\n---\nEnvoye depuis DevisPro';
+  var mailtoLink = 'mailto:support.devispro@gmail.com?subject=' + encodeURIComponent('DevisPro - ' + subject) + '&body=' + encodeURIComponent(fullBody);
+  // Ouvrir dans un iframe invisible pour eviter la redirection
+  var link = document.createElement('a');
+  link.href = mailtoLink;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  // Afficher le succes dans le modal
+  document.getElementById('support-form-view').style.display='none';
+  document.getElementById('support-success-view').style.display='block';
 }
 
 function formatCard(el){var v=el.value.replace(/\\D/g,'').slice(0,16);el.value=v.replace(/(.{4})/g,'$1 ').trim();}
