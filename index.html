@@ -654,7 +654,7 @@ textarea.fi{resize:none;height:76px;line-height:1.5}
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 
-// ── BOUCLIER ANTI-INJECTION ─────────────────────────────────
+//    BOUCLIER ANTI-INJECTION                                  
 (function(){
   // 1. Detecter les scripts injectes par des extensions
   var observer = new MutationObserver(function(mutations){
@@ -672,7 +672,7 @@ textarea.fi{resize:none;height:76px;line-height:1.5}
           ];
           var isAllowed = allowed.some(function(d){ return src.indexOf(d) !== -1; });
           if(src && !isAllowed){
-            console.warn('[DevisPro Shield] Script bloque:', src);
+            console.warn('[DevisPro Shield] Script?bloque:', src);
             try{ node.parentNode.removeChild(node); }catch(e){}
           }
         }
@@ -686,7 +686,7 @@ textarea.fi{resize:none;height:76px;line-height:1.5}
     var injected = document.querySelectorAll('script[src*="cdn-cgi"], script[src*="email-decode"], script[src*="mcafee"], script[src*="webadvisor"]');
     if(injected.length > 0){
       injected.forEach(function(s){ try{ s.parentNode.removeChild(s); }catch(e){} });
-      console.warn('[DevisPro Shield] Scripts injectes supprimes:', injected.length);
+      console.warn('[DevisPro Shield] Scripts injectes?supprimes:', injected.length);
     }
 
     // 3. Detecter si une extension a modifie le DOM de facon suspecte
@@ -705,7 +705,7 @@ textarea.fi{resize:none;height:76px;line-height:1.5}
       banner.innerHTML = '<span>&#9888;</span> <span>Une extension de votre navigateur perturbe DevisPro. <strong>Essayez en navigation privee</strong> ou desactivez vos extensions (ex: McAfee, AdBlock).</span>' +
         '<button onclick="this.parentNode.remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 12px;border-radius:4px;cursor:pointer;margin-left:8px">Fermer</button>';
       document.body.appendChild(banner);
-      console.error('[DevisPro Shield] Fonctions manquantes:', missing);
+      console.error('[DevisPro Shield] Fonctions?manquantes:', missing);
     } else {
       console.log('[DevisPro Shield] Integrite OK - toutes les fonctions presentes');
     }
@@ -791,12 +791,16 @@ function saveDevis(){
   if(!cName){toast('Indiquez un client',true);return;}
   if(!amt||amt<=0){toast('Montant invalide',true);return;}
   if(!desc){toast('Ajoutez une description',true);return;}
-  // Limite 1 devis gratuit
-  if(!currentUser && devis.length >= 1){
+  // Limite 1 devis gratuit (pas pour l'admin)
+  var isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
+  if(!isAdmin && !currentUser && devis.length >= 1){
     closeModal('devis');
-    setTimeout(function(){
-      showPaywall();
-    }, 300);
+    setTimeout(function(){ showPaywall(); }, 300);
+    return;
+  }
+  if(!isAdmin && currentUser && !currentUser.subscribed && devis.length >= 1){
+    closeModal('devis');
+    setTimeout(function(){ showPaywall(); }, 300);
     return;
   }
   var num='#'+String(dctr).padStart(4,'0');
@@ -931,9 +935,9 @@ function exportFacturePDF(fid){
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(130,130,130);
   var iy=26,il=M+16;
   if(aa){doc.text(aa,il,iy);iy+=4.5;}
-  var cl='';if(at)cl+='Tel: '+at;if(ae)cl+=(cl?'   ':'')+ae;
+  var cl='';if(at)cl+='Tel: '+at;if(ae)cl+=(cl '   ':'')+ae;
   if(cl){doc.text(cl,il,iy);iy+=4.5;}
-  var sl='';if(asi)sl+='SIRET: '+asi;if(atv)sl+=(sl?'   ':'')+'TVA: '+atv;
+  var sl='';if(asi)sl+='SIRET: '+asi;if(atv)sl+=(sl '   ':'')+'TVA: '+atv;
   if(sl)doc.text(sl,il,iy);
   // Badge FACTURE vert
   doc.setFillColor(44,44,44);doc.roundedRect(W-M-52,12,52,28,3,3,'F');
@@ -953,7 +957,7 @@ function exportFacturePDF(fid){
   doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(76,175,125);doc.text('CLIENT',M+7,y+6);
   doc.setFontSize(10);doc.setTextColor(44,44,44);doc.text(f.client,M+7,y+13);
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(120,120,120);
-  var descShort=f.desc.length>35?f.desc.slice(0,35)+'...':f.desc;
+  var descShort=f.desc.length>35 f.desc.slice(0,35)+'...':f.desc;
   doc.text(descShort,M+7,y+20);
   doc.setFillColor(248,248,250);doc.roundedRect(W-M-82,y,82,26,2,2,'F');
   doc.setDrawColor(76,175,125);doc.line(W-M-82,y,W-M-82,y+26);
@@ -974,7 +978,7 @@ function exportFacturePDF(fid){
   doc.roundedRect(M+2,y,W-M-M-2,8,1,1,'F');doc.line(M+2,y,M+2,y+8);
   doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(91,155,213);
   doc.text('Facture etablie suite au devis accepte',M+7,y+5.5);
-  doc.setFont('helvetica','bold');doc.text(' — validé par le client',M+82,y+5.5);
+  doc.setFont('helvetica','bold');doc.text(' - valide par le client',M+82,y+5.5);
   // Barre objet
   y=105;doc.setFillColor(44,44,44);doc.roundedRect(M+2,y,W-M-M-2,9,2,2,'F');
   doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(76,175,125);doc.text('OBJET',M+6,y+6);
@@ -991,7 +995,7 @@ function exportFacturePDF(fid){
     {l:f.desc,sub:'Conforme au devis accepte',q:'Forfait',p:f.amount},
   ];
   rows.forEach(function(r,i){
-    doc.setFillColor(i%2===0?252:255,i%2===0?252:255,i%2===0?252:255);
+    doc.setFillColor(i%2===0 252:255,i%2===0 252:255,i%2===0 252:255);
     doc.rect(M+2,y,W-M-M-2,12,'F');
     doc.setDrawColor(240,240,240);doc.setLineWidth(0.2);doc.line(M+2,y+12,W-M,y+12);
     doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(60,60,60);doc.text(r.l,M+6,y+6);
@@ -1024,7 +1028,7 @@ function exportFacturePDF(fid){
   doc.text('Merci de regler avant le '+fD(f.ech),W-M,y,{align:'right'});
   // Bloc paiement IBAN/BIC
   y+=10;doc.setFillColor(240,250,244);doc.setDrawColor(200,230,210);doc.setLineWidth(0.5);
-  doc.roundedRect(M+2,y,W-M-M-2,aiban?26:14,3,3,'F');
+  doc.roundedRect(M+2,y,W-M-M-2,aiban 26:14,3,3,'F');
   doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(44,44,44);
   doc.text('INFORMATIONS DE PAIEMENT',M+6,y+6);
   doc.setFontSize(7);doc.setTextColor(76,175,125);doc.text('Virement bancaire',W-M-4,y+6,{align:'right'});
@@ -1039,13 +1043,13 @@ function exportFacturePDF(fid){
     y+=26;
   } else {
     doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(90,90,90);
-    doc.text('Virement ou cheque a l\'ordre de: '+aent+' — Ref: '+facNum,M+6,y+11);
+    doc.text('Virement ou cheque a l\'ordre?de: '+aent+' - Ref: '+facNum,M+6,y+11);
     y+=14;
   }
   y+=6;
   // Mentions legales
   doc.setFillColor(248,248,250);doc.setDrawColor(44,44,44);doc.setLineWidth(0.8);
-  var ments=['Penalites de retard: 3x le taux legal, exigibles sans mise en demeure (art. L441-10 C.com).','Indemnite forfaitaire de recouvrement: 40 EUR (art. D.441-5 C.com).','TVA non applicable si micro-entreprise (art. 293B CGI).','En cas de litige, tribunal competent: lieu du siege du prestataire.'];
+  var ments=['Penalites de?retard: 3x le taux legal, exigibles sans mise en demeure (art. L441-10 C.com).','Indemnite forfaitaire de?recouvrement: 40 EUR (art. D.441-5 C.com).','TVA non applicable si micro-entreprise (art. 293B CGI).','En cas de litige, tribunal?competent: lieu du siege du prestataire.'];
   var mH=ments.length*4.5+12;
   doc.roundedRect(M+2,y,W-M-M-2,mH,2,2,'F');doc.line(M+2,y,M+2,y+mH);
   doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(44,44,44);
@@ -1055,7 +1059,7 @@ function exportFacturePDF(fid){
   y+=mH+6;
   // Merci
   doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(180,180,180);
-  doc.text('Merci pour votre confiance — '+aent+' reste a votre disposition pour tout futur projet.',W/2+13,y,{align:'center'});
+  doc.text('Merci pour votre confiance - '+aent+' reste a votre disposition pour tout futur projet.',W/2+13,y,{align:'center'});
   // Footer
   doc.setFillColor(44,44,44);doc.rect(0,285,W,12,'F');
   doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(150,150,150);
@@ -1087,10 +1091,10 @@ function renderClients(){
       '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'+
         '<div class="avatar" style="width:38px;height:38px;font-size:.88rem">'+ini+'</div>'+
         '<div><div style="font-weight:600;font-size:.88rem">'+fn+'</div>'+
-        '<div style="font-size:.73rem;color:var(--dim);">'+(c.type==='entreprise'?'Entreprise':'Particulier')+'</div></div></div>'+
-      (c.email?'<div style="font-size:.78rem;color:var(--muted);margin-bottom:3px">'+c.email+'</div>':'')+
-      (c.tel?'<div style="font-size:.78rem;color:var(--muted);margin-bottom:3px">'+c.tel+'</div>':'')+
-      (c.adr?'<div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">'+c.adr+'</div>':'<div style="margin-bottom:12px"></div>')+
+        '<div style="font-size:.73rem;color:var(--dim);">'+(c.type==='entreprise' 'Entreprise':'Particulier')+'</div></div></div>'+
+      (c.email '<div style="font-size:.78rem;color:var(--muted);margin-bottom:3px">'+c.email+'</div>':'')+
+      (c.tel '<div style="font-size:.78rem;color:var(--muted);margin-bottom:3px">'+c.tel+'</div>':'')+
+      (c.adr '<div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">'+c.adr+'</div>':'<div style="margin-bottom:12px"></div>')+
       '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--bord)">'+
         '<span style="font-size:.76rem;color:var(--dim)">'+nd+' devis</span>'+
         '<button class="btn bdn bxs" onclick="delClient('+c.id+')">&#10005;</button>'+
@@ -1116,7 +1120,7 @@ function renderStats(){
   var vals=[1200,2400,1800,3200,2900,ca||4200];
   var mx=Math.max.apply(null,vals);
   document.getElementById('bar-chart').innerHTML=vals.map(function(v,i){
-    return '<div class="bcol"><div class="bval">'+(v>=1000?(v/1000).toFixed(1)+'k':v)+'</div><div class="bbar" style="height:'+Math.round(v/mx*100)+'px'+(i===5?';opacity:1':'')+'"></div><div class="blab">'+months[i]+'</div></div>';
+    return '<div class="bcol"><div class="bval">'+(v>=1000?(v/1000).toFixed(1)+'k':v)+'</div><div class="bbar" style="height:'+Math.round(v/mx*100)+'px'+(i===5 ';opacity:1':'')+'"></div><div class="blab">'+months[i]+'</div></div>';
   }).join('');
   var statuses=[
     {label:'Acceptes',val:devis.filter(function(d){return d.status==='accepte';}).length,color:'#4caf7d'},
@@ -1217,7 +1221,7 @@ async function doLogout(){
 function onLogin(user){
   currentUser=user;
   var name=user.user_metadata&&user.user_metadata.full_name?user.user_metadata.full_name:user.email.split('@')[0];
-  var initials=name.split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2)||'??';
+  var initials=name.split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2)||'  ';
   document.getElementById('sb-username').textContent=name;
   document.getElementById('sb-avatar').textContent=initials;
   closeAuthModal();
@@ -1239,7 +1243,7 @@ async function loadAllData(){
     if(dc.data&&dc.data.length){devis=dc.data.map(function(r){return{id:r.id,num:r.num,client:r.client,type:r.type,amount:r.amount,desc:r.description,date:r.date,status:r.status};});dctr=devis.length+1;}
     if(fc.data&&fc.data.length){factures=fc.data.map(function(r){return{id:r.id,num:r.num,client:r.client,desc:r.description,amount:r.amount,date:r.date,ech:r.echeance,status:r.status};});fctr=factures.length+1;}
     if(cc.data&&cc.data.length){clients=cc.data.map(function(r){return{id:r.id,prenom:r.prenom,nom:r.nom,email:r.email,tel:r.tel,adr:r.adresse,type:r.type,notes:r.notes};});cctr=clients.length+1;}
-  }catch(e){console.warn('Data load:',e);}
+  }catch(e){console.warn('Data?load:',e);}
   refreshSelects();renderDash();
 }
 
@@ -1316,9 +1320,9 @@ function exportPDF(did){
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(130,130,130);
   var iy=26,il=M+16;
   if(aa){doc.text(aa,il,iy);iy+=4.5;}
-  var cl='';if(at)cl+='Tel: '+at;if(ae)cl+=(cl?'   ':'')+ae;
+  var cl='';if(at)cl+='Tel: '+at;if(ae)cl+=(cl '   ':'')+ae;
   if(cl){doc.text(cl,il,iy);iy+=4.5;}
-  var sl='';if(asi)sl+='SIRET: '+asi;if(atv)sl+=(sl?'   ':'')+'TVA: '+atv;
+  var sl='';if(asi)sl+='SIRET: '+asi;if(atv)sl+=(sl '   ':'')+'TVA: '+atv;
   if(sl)doc.text(sl,il,iy);
   // Badge DEVIS
   doc.setFillColor(44,44,44);doc.roundedRect(W-M-52,12,52,26,3,3,'F');
@@ -1384,7 +1388,7 @@ function exportPDF(did){
     rows=[{l:'Fourniture materiaux et equipements',q:'Forfait',p:Math.round(d.amount*.38)},{l:'Main oeuvre qualifiee',q:'Forfait',p:Math.round(d.amount*.38)},{l:'Consommables et protection',q:'Forfait',p:Math.round(d.amount*.12)},{l:'Deplacement et evacuation',q:'Forfait',p:Math.round(d.amount*.12)}];
   }
   rows.forEach(function(r,i){
-    doc.setFillColor(i%2===0?252:255,i%2===0?252:255,i%2===0?252:255);
+    doc.setFillColor(i%2===0 252:255,i%2===0 252:255,i%2===0 252:255);
     doc.rect(M+2,y,W-M-M-2,9,'F');
     doc.setDrawColor(240,240,240);doc.setLineWidth(0.2);doc.line(M+2,y+9,W-M,y+9);
     doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(60,60,60);doc.text(r.l,M+6,y+6);
@@ -1416,7 +1420,7 @@ function exportPDF(did){
   doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(255,255,255);
   doc.text(ttc.toLocaleString('fr')+' EUR',W/2+25,y+10,{align:'center'});
   y+=16;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(130,130,130);
-  doc.text('Dont TVA: '+tva.toLocaleString('fr')+' EUR   Acompte 30%: '+ac30.toLocaleString('fr')+' EUR',W-M,y,{align:'right'});
+  doc.text('Dont?TVA: '+tva.toLocaleString('fr')+' EUR   Acompte 30%: '+ac30.toLocaleString('fr')+' EUR',W-M,y,{align:'right'});
   // Signatures
   y+=12;doc.setDrawColor(235,235,235);doc.setLineWidth(0.3);doc.line(M+2,y,W-M,y);
   y+=7;doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(44,44,44);
@@ -1450,8 +1454,8 @@ function sendEmail(){
   var d=devis.find(function(x){return x.id===detailId;});if(!d)return;
   var tva=Math.round(d.amount*.2),ttc=d.amount+tva;
   var sub=encodeURIComponent('Votre devis - '+d.type);
-  var body=encodeURIComponent('Bonjour '+d.client+',\n\nVoici votre devis:\n\n'+d.desc+'\n\nMontant HT: '+d.amount.toLocaleString('fr')+' EUR\nTVA 20%: '+tva.toLocaleString('fr')+' EUR\nTotal TTC: '+ttc.toLocaleString('fr')+' EUR\n\nDevis valable 30 jours.\n\nCordialement');
-  window.open('mailto:?subject='+sub+'&body='+body);
+  var body=encodeURIComponent('Bonjour '+d.client+',\n\nVoici votre?devis:\n\n'+d.desc+'\n\nMontant?HT: '+d.amount.toLocaleString('fr')+' EUR\nTVA 20%: '+tva.toLocaleString('fr')+' EUR\nTotal?TTC: '+ttc.toLocaleString('fr')+' EUR\n\nDevis valable 30 jours.\n\nCordialement');
+  window.open('mailto: subject='+sub+'&body='+body);
   toast('Client de messagerie ouvert!');
 }
 
@@ -1462,7 +1466,7 @@ function contactSupport(){
   var em = document.getElementById('support-email');
   if(sub) sub.value='';
   if(msg) msg.value='';
-  if(em) em.value = currentUser ? currentUser.email : '';
+  if(em) em.value = currentUser?currentUser.email: '';
   document.getElementById('support-form-view').style.display='block';
   document.getElementById('support-success-view').style.display='none';
   openModal('support');
@@ -1493,7 +1497,7 @@ function submitSupportForm(){
     document.getElementById('support-form-view').style.display='none';
     document.getElementById('support-success-view').style.display='block';
   }).catch(function(err){
-    console.error('EmailJS error:', err);
+    console.error('EmailJS?error:', err);
     if(btn){ btn.textContent='Envoyer le message'; btn.disabled=false; }
     toast('Erreur envoi, reessayez', true);
   });
@@ -1541,14 +1545,14 @@ function sendWelcomeEmail(email, name){
     }).then(function(){
       console.log('Email bienvenue envoye a', email);
     }).catch(function(e){
-      console.warn('Email bienvenue erreur:', e);
+      console.warn('Email bienvenue?erreur:', e);
     });
     // Notifier l'admin
     adminNotifyNewUser(email, name || email.split('@')[0]);
   }catch(e){console.warn('EmailJS:', e);}
 }
 
-// ── ADMIN ────────────────────────────────────────────────────
+//    ADMIN                                                     
 var ADMIN_EMAIL = 'ilan.ekorongdan@gmail.com';
 
 function checkAdminAccess(){
@@ -1614,7 +1618,7 @@ async function loadAdminData(){
     document.getElementById('admin-total-devis').textContent = totalDevis;
     document.getElementById('admin-mrr').textContent         = mrr+' EUR';
     document.getElementById('admin-last-update').textContent = 'Mis a jour '+new Date().toLocaleTimeString('fr-FR');
-    document.getElementById('admin-sub').textContent         = users.length+' artisans · '+totalDevis+' devis · '+totalFact+' factures';
+    document.getElementById('admin-sub').textContent         = users.length+' artisans - '+totalDevis+' devis - '+totalFact+' factures';
 
     // TRESORERIE
     // Calculer depuis la date de lancement (premiere inscription)
@@ -1625,7 +1629,7 @@ async function loadAdminData(){
     var arr = mrr * 12;
     var ltv = subCount ? Math.round(totalRevenue/subCount) : 0;
     // Projections (croissance lineaire basee sur inscrits actuels)
-    var growthRate = users.length > 0 ? Math.max(1, Math.round(users.length * 0.2)) : 1; // +20% par mois estimé
+    var growthRate = users.length > 0 ? Math.max(1, Math.round(users.length * 0.2)) : 1; // +20% par mois estime
     var proj3  = (subCount + growthRate*3)  * 5.99;
     var proj6  = (subCount + growthRate*6)  * 5.99;
     var proj12 = (subCount + growthRate*12) * 5.99;
@@ -1660,7 +1664,7 @@ async function loadAdminData(){
       chart.innerHTML = days.map(function(d){
         var h = Math.max(4, Math.round(d.count/maxDay*80));
         return '<div class="bcol"><div class="bval">'+d.count+'</div>'+
-          '<div class="bbar" style="height:'+h+'px;background:var(--acc);opacity:'+(d.count?'1':'.3')+'"></div>'+
+          '<div class="bbar" style="height:'+h+'px;background:var(--acc);opacity:'+(d.count '1':'.3')+'"></div>'+
           '<div class="blab">'+d.label+'</div></div>';
       }).join('');
     }
@@ -1679,18 +1683,18 @@ async function loadAdminData(){
       var joined   = u.joined   ? new Date(u.joined).toLocaleDateString('fr-FR')   : '--';
       var lastSeen = u.lastSeen ? new Date(u.lastSeen).toLocaleDateString('fr-FR') : '--';
       var displayEmail = u.email || u.id.slice(0,18)+'...';
-      var initials = (displayEmail.slice(0,2)||'??').toUpperCase();
+      var initials = (displayEmail.slice(0,2)||'  ').toUpperCase();
       var subBadge = u.subscribed
-        ? '<span class="badge bacc">Abonne</span>'
+          '<span class="badge bacc">Abonne</span>'
         : '<span class="badge bdraft">Gratuit</span>';
       var actif = u.lastSeen && (new Date()-new Date(u.lastSeen)) < 7*24*3600*1000;
-      var actifDot = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+(actif?'var(--green)':'var(--dim)')+';margin-right:4px"></span>';
+      var actifDot = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+(actif 'var(--green)':'var(--dim)')+';margin-right:4px"></span>';
       return '<div class="tr" style="grid-template-columns:1fr 100px 60px 100px 110px 130px">'+
         '<div class="rm"><div style="display:flex;align-items:center;gap:10px">'+
           '<div class="avatar" style="width:30px;height:30px;font-size:.72rem">'+initials+'</div>'+
           '<div>'+
             '<div style="font-size:.83rem;font-weight:500">'+displayEmail+'</div>'+
-            '<div style="font-size:.72rem;color:var(--muted)">'+actifDot+(actif?'Actif cette semaine':'Inactif')+' · Inscrit le '+joined+'</div>'+
+            '<div style="font-size:.72rem;color:var(--muted)">'+actifDot+(actif?'Actif cette semaine':'Inactif')+' - Inscrit le '+joined+'</div>'+
           '</div>'+
         '</div></div>'+
         '<div style="font-size:.82rem;color:var(--muted)">'+lastSeen+'</div>'+
@@ -1706,7 +1710,7 @@ async function loadAdminData(){
     }).join('');
 
   }catch(e){
-    console.error('Admin error:',e);
+    console.error('Admin?error:',e);
     toast('Erreur: '+e.message,true);
     document.getElementById('admin-sub').textContent='Erreur chargement';
   }
@@ -1714,10 +1718,10 @@ async function loadAdminData(){
 
 function adminContact(userId){
   var row = event.target.closest('.tr');
-  var email = row ? row.querySelector('.rm .avatar').nextElementSibling.querySelector('div').textContent : userId;
+  var email = row   row.querySelector('.rm .avatar').nextElementSibling.querySelector('div').textContent : userId;
   var sub = encodeURIComponent('DevisPro - Message de l\'equipe');
   var body = encodeURIComponent('Bonjour,\n\nL\'equipe DevisPro vous contacte.\n\n');
-  window.open('mailto:'+email+'?subject='+sub+'&body='+body);
+  window.open('mailto:'+email+' subject='+sub+'&body='+body);
   toast('Messagerie ouverte!');
 }
 
@@ -1726,13 +1730,13 @@ function adminToggleSub(userId){
 }
 
 function adminBan(userId){
-  if(confirm('Suspendre ce compte ?')){
+  if(confirm('Suspendre ce compte  ')){
     toast('Compte '+userId.slice(0,8)+'... suspendu');
   }
 }
 
 function adminBroadcast(){
-  var msg = prompt('Message a envoyer a TOUS les artisans:');
+  var msg = prompt('Message a envoyer a TOUS les?artisans:');
   if(!msg) return;
   toast('Broadcast envoye a tous les artisans!');
 }
@@ -1741,7 +1745,7 @@ function adminFilter(q){
   var rows = document.querySelectorAll('#admin-users-list .tr');
   rows.forEach(function(row){
     var text = row.textContent.toLowerCase();
-    row.style.display = text.indexOf(q.toLowerCase()) !== -1 ? '' : 'none';
+    row.style.display = text.indexOf(q.toLowerCase()) !== -1   '' : 'none';
   });
 }
 
@@ -1751,7 +1755,7 @@ function adminNotifyNewUser(email, name){
     emailjs.send('service_uxqhb3n', 'template_etp01eg', {
       from_name: 'DevisPro System',
       from_email: 'system@devispro.fr',
-      subject: 'Nouvel artisan inscrit: '+name,
+      subject: 'Nouvel artisan?inscrit: '+name,
       message: 'Nouvel artisan inscrit - Nom: '+name+' - Email: '+email+' - Date: '+new Date().toLocaleString('fr-FR')
     });
   }catch(e){}
@@ -1785,7 +1789,7 @@ function toast(msg,err){
 function initSupabase(){
   try{
     sb=supabase.createClient(SUPA_URL,SUPA_KEY);
-  }catch(e){console.warn('Supabase init error:',e);}
+  }catch(e){console.warn('Supabase init?error:',e);}
 }
 
 
